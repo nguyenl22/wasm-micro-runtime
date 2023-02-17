@@ -806,6 +806,14 @@ wasm_runtime_module_dup_data(WASMModuleInstanceCommon *module_inst,
                              const char *src, uint64 size);
 
 /* See wasm_export.h for description */
+WASM_RUNTIME_API_EXTERN uint32
+wasm_runtime_get_base_memory_size(WASMModuleInstanceCommon *module_inst);
+
+/* See wasm_export.h for description */
+WASM_RUNTIME_API_EXTERN uint32
+wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst);
+
+/* See wasm_export.h for description */
 WASM_RUNTIME_API_EXTERN bool
 wasm_runtime_validate_app_addr(WASMModuleInstanceCommon *module_inst,
                                uint64 app_offset, uint64 size);
