@@ -520,6 +520,10 @@ wasm_runtime_get_llvm_jit_options(void);
 /* Custom methods */
 /* See wasm_export.h for description */
 WASM_RUNTIME_API_EXTERN uint32
+wasm_runtime_get_base_memory_size(WASMModuleInstanceCommon *module_inst);
+
+/* See wasm_export.h for description */
+WASM_RUNTIME_API_EXTERN uint32
 wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst);
 
 #if WASM_ENABLE_GC != 0
@@ -804,14 +808,6 @@ wasm_runtime_module_free(WASMModuleInstanceCommon *module_inst, uint64 ptr);
 WASM_RUNTIME_API_EXTERN uint64
 wasm_runtime_module_dup_data(WASMModuleInstanceCommon *module_inst,
                              const char *src, uint64 size);
-
-/* See wasm_export.h for description */
-WASM_RUNTIME_API_EXTERN uint32
-wasm_runtime_get_base_memory_size(WASMModuleInstanceCommon *module_inst);
-
-/* See wasm_export.h for description */
-WASM_RUNTIME_API_EXTERN uint32
-wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst);
 
 /* See wasm_export.h for description */
 WASM_RUNTIME_API_EXTERN bool
