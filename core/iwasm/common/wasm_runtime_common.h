@@ -517,6 +517,11 @@ LLVMJITOptions *
 wasm_runtime_get_llvm_jit_options(void);
 #endif
 
+/* Custom methods */
+/* See wasm_export.h for description */
+WASM_RUNTIME_API_EXTERN uint32
+wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst);
+
 #if WASM_ENABLE_GC != 0
 /* Internal API */
 uint32
