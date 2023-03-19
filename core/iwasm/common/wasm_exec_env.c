@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  */
 
+#include <stdatomic.h>
+
 #include "wasm_exec_env.h"
 #include "wasm_runtime_common.h"
 #if WASM_ENABLE_GC != 0
@@ -25,6 +27,7 @@
 #include "../libraries/debug-engine/debug_engine.h"
 #endif
 #endif
+
 
 WASMExecEnv *
 wasm_exec_env_create_internal(struct WASMModuleInstanceCommon *module_inst,
@@ -65,6 +68,9 @@ wasm_exec_env_create_internal(struct WASMModuleInstanceCommon *module_inst,
                       os_get_invalid_handle())))
         goto fail5;
 #endif
+
+    static _Atomic uint64 uid = 0;
+    exec_env->uid = uid++;
 
     exec_env->module_inst = module_inst;
     exec_env->wasm_stack_size = stack_size;
