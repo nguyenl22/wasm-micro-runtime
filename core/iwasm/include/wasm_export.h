@@ -234,11 +234,13 @@ typedef enum {
     WASM_LOG_LEVEL_VERBOSE = 4
 } log_level_t;
 
-/* Custom methods */
-/** WALI: **/
+/* Custom WALI methods */
 WASM_RUNTIME_API_EXTERN wasm_function_inst_t
 wasm_runtime_get_indirect_function(wasm_module_inst_t module_inst, 
                                 uint32_t tbl_idx, uint32_t elem_idx);
+
+WASM_RUNTIME_API_EXTERN uint32_t
+wasm_runtime_get_function_idx(wasm_module_inst_t module_inst, wasm_function_inst_t func);
 
 /**
  * WALI: Get the size of the base memory (without mmaped data)
