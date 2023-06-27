@@ -9,6 +9,7 @@
 #if WASM_ENABLE_GC != 0
 #include "aot_emit_gc.h"
 #endif
+#include "aot_emit_sigpoll.h"
 #include "../aot/aot_runtime.h"
 #include "../interpreter/wasm_loader.h"
 
@@ -598,8 +599,14 @@ aot_compile_op_block(AOTCompContext *comp_ctx, AOTFuncContext *func_ctx,
             goto fail;
         /* Start to translate the block */
         SET_BUILDER_POS(block->llvm_entry_block);
-        if (label_type == LABEL_TYPE_LOOP)
+
+        if (label_type == LABEL_TYPE_LOOP) {
             aot_checked_addr_list_destroy(func_ctx);
+            /* Insert Signal Polling for WALI here for Loops*/
+            if (!aot_emit_sigpoll(comp_ctx, func_ctx)) {
+                goto fail;
+            }
+        }
     }
     else if (label_type == LABEL_TYPE_IF) {
         POP_COND(value);

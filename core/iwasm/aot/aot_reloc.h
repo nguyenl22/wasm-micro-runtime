@@ -25,6 +25,9 @@ typedef struct {
 /* clang-format off */
 #define REG_SYM(symbol) { #symbol, (void *)symbol }
 
+#define REG_WALI_SYM()                    \
+    REG_SYM(aot_poll_pending_signal),
+
 #if WASM_ENABLE_BULK_MEMORY != 0
 #define REG_BULK_MEMORY_SYM()             \
     REG_SYM(aot_memory_init),             \
@@ -213,6 +216,7 @@ typedef struct {
     REG_LLVM_PGO_SYM()                    \
     REG_GC_SYM()                          \
     REG_STRINGREF_SYM()                   \
+    REG_WALI_SYM()                        \
 
 #define CHECK_RELOC_OFFSET(data_size) do {              \
     if (!check_reloc_offset(target_section_size,        \
