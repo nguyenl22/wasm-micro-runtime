@@ -638,6 +638,19 @@ wasm_get_default_memory(WASMModuleInstance *module_inst)
         return NULL;
 }
 
+bool
+wasm_can_enlarge_memory(WASMModuleInstance *module, uint32 inc_page_count)
+{
+    WASMMemoryInstance *memory = wasm_get_default_memory(module);
+    if (!memory)
+        return false;
+
+    if (memory->cur_page_count + inc_page_count > memory->max_page_count)
+        return false;
+
+    return true;
+}
+
 void
 wasm_runtime_set_mem_bound_check_bytes(WASMMemoryInstance *memory,
                                        uint64 memory_data_size)
