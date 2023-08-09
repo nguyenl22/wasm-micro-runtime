@@ -87,6 +87,8 @@ typedef struct WASMExecEnv {
         uint8 *bottom;
     } wasm_stack;
 
+    uint64_t *sigpending_ptr;
+
 #if WASM_ENABLE_FAST_JIT != 0
     /**
      * Cache for
