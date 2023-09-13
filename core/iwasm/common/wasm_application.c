@@ -21,6 +21,8 @@
 #if WASM_ENABLE_GC_PERF_PROFILING != 0
 #include "../../shared/mem-alloc/mem_alloc.h"
 #endif
+#if WASM_ENABLE_LIBC_WALI != 0
+#include "../libraries/libc-wali/wali_defs.h"
 #endif
 
 static void
@@ -236,10 +238,6 @@ execute_main(WASMModuleInstanceCommon *module_inst, int32 argc, char *argv[])
     return ret;
 }
 
-int app_argc;
-char **app_argv;
-//char *app_env_file;
-
 bool
 wasm_application_execute_main(WASMModuleInstanceCommon *module_inst, int32 argc,
                               char *argv[])
@@ -249,8 +247,12 @@ wasm_application_execute_main(WASMModuleInstanceCommon *module_inst, int32 argc,
     WASMExecEnv *exec_env;
 #endif
 
-    app_argc = argc;
-    app_argv = argv;
+#if WASM_ENABLE_LIBC_WALI != 0
+    wali_app_argc = argc;
+    wali_app_argv = argv;
+    /* Set by internal WALI state */
+    invoked_wali = false;
+#endif
 
     ret = execute_main(module_inst, argc, argv);
 
