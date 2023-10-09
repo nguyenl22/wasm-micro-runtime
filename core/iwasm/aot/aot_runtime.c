@@ -2011,6 +2011,19 @@ aot_lookup_global(const AOTModuleInstance *module_inst, const char *name)
     return NULL;
 }
 
+AOTGlobalInstance*
+aot_lookup_global(const AOTModuleInstance *module_inst, const char *name)
+{
+    uint32 i;
+    AOTGlobalInstance *export_globs =
+        (AOTGlobalInstance*)module_inst->export_globals;
+
+    for (i = 0; i < module_inst->export_global_count; i++)
+        if (!strcmp(export_globs[i].name, name))
+            return &export_globs[i];
+    return NULL;
+}
+
 #ifdef OS_ENABLE_HW_BOUND_CHECK
 static bool
 invoke_native_with_hw_bound_check(WASMExecEnv *exec_env, void *func_ptr,
