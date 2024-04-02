@@ -53,7 +53,7 @@ bh_static_assert(offsetof(AOTModuleInstance, c_api_func_imports)
 bh_static_assert(offsetof(AOTModuleInstance, global_table_data)
                  == 13 * sizeof(uint64) + 128 + 14 * sizeof(uint64));
 
-bh_static_assert(sizeof(AOTMemoryInstance) == 120);
+bh_static_assert(sizeof(AOTMemoryInstance) == 128);
 bh_static_assert(offsetof(AOTTableInstance, elems) == 24);
 
 bh_static_assert(offsetof(AOTModuleInstanceExtra, stack_sizes) == 0);
@@ -2013,19 +2013,6 @@ aot_lookup_global(const AOTModuleInstance *module_inst, const char *name)
     return NULL;
 }
 
-AOTGlobalInstance*
-aot_lookup_global(const AOTModuleInstance *module_inst, const char *name)
-{
-    uint32 i;
-    AOTGlobalInstance *export_globs =
-        (AOTGlobalInstance*)module_inst->export_globals;
-
-    for (i = 0; i < module_inst->export_global_count; i++)
-        if (!strcmp(export_globs[i].name, name))
-            return &export_globs[i];
-    return NULL;
-}
-
 #ifdef OS_ENABLE_HW_BOUND_CHECK
 static bool
 invoke_native_with_hw_bound_check(WASMExecEnv *exec_env, void *func_ptr,
@@ -2416,7 +2403,7 @@ aot_poll_pending_signal(WASMExecEnv *exec_env)
     /* Patch function pointer in case of reassignment */
     uint32 func_idx = wali_sigtable[signo].func_idx;
     uint32 func_type_idx = module_inst->func_type_indexes[func_idx]; 
-    sigfn->u.func.func_type = ((AOTModule*)module_inst->module)->func_types[func_type_idx];
+    sigfn->u.func.func_type = ((AOTModule*)module_inst->module)->types[func_type_idx];
     sigfn->u.func.func_ptr = module_inst->func_ptrs[func_idx];
     /* */
     pthread_mutex_unlock(&sigtable_mut);
@@ -2868,8 +2855,9 @@ aot_get_indirect_function (AOTModuleInstance *module_inst, uint32 tbl_idx,
 
   AOTModule *aot_module = (AOTModule *)module_inst->module;
   AOTTableInstance *tbl_inst = NULL;
-  uint32 func_idx = NULL_REF;
+  table_elem_type_t tbl_elem_val = NULL_REF;
   uint32 *func_type_indexes = module_inst->func_type_indexes;
+  uint32 func_idx;
   uint32 func_type_idx;
   void **func_ptrs = module_inst->func_ptrs;
 
@@ -2880,14 +2868,21 @@ aot_get_indirect_function (AOTModuleInstance *module_inst, uint32 tbl_idx,
       goto fail;
   }
 
-  func_idx = tbl_inst->elems[table_elem_idx];
-  if (func_idx == NULL_REF) {
+  tbl_elem_val = tbl_inst->elems[table_elem_idx];
+  if (tbl_elem_val == NULL_REF) {
       aot_set_exception_with_id(module_inst, EXCE_UNINITIALIZED_ELEMENT);
       goto fail;
   }
 
+#if WASM_ENABLE_GC == 0
+    func_idx = tbl_elem_val;
+#else
+    func_idx =
+        wasm_func_obj_get_func_idx_bound((WASMFuncObjectRef)tbl_elem_val);
+#endif
+
   func_type_idx = func_type_indexes[func_idx];
-  *func_type_addr = aot_module->func_types[func_type_idx];
+  *func_type_addr = aot_module->types[func_type_idx];
 
   if (func_idx >= aot_module->import_func_count) {
       /* func pointer was looked up previously */
@@ -2913,8 +2908,7 @@ aot_call_indirect(WASMExecEnv *exec_env, uint32 tbl_idx, uint32 table_elem_idx,
     AOTModule *aot_module = (AOTModule *)module_inst->module;
     AOTFuncType *func_type;
     void **func_ptrs = module_inst->func_ptrs, *func_ptr;
-    uint32 func_type_idx, func_idx, ext_ret_count;
-    table_elem_type_t tbl_elem_val = NULL_REF;
+    uint32 func_idx, ext_ret_count;
     AOTImportFunc *import_func;
     const char *signature = NULL;
     void *attachment = NULL;
@@ -2935,27 +2929,6 @@ aot_call_indirect(WASMExecEnv *exec_env, uint32 tbl_idx, uint32 table_elem_idx,
                                           &func_ptr, &func_idx, &func_type);
     if (!success) {
       goto fail;
-    }
-
-    tbl_elem_val = ((table_elem_type_t *)tbl_inst->elems)[table_elem_idx];
-    if (tbl_elem_val == NULL_REF) {
-        aot_set_exception_with_id(module_inst, EXCE_UNINITIALIZED_ELEMENT);
-        goto fail;
-    }
-
-#if WASM_ENABLE_GC == 0
-    func_idx = tbl_elem_val;
-#else
-    func_idx =
-        wasm_func_obj_get_func_idx_bound((WASMFuncObjectRef)tbl_elem_val);
-#endif
-
-    func_type_idx = func_type_indexes[func_idx];
-    func_type = (AOTFuncType *)aot_module->types[func_type_idx];
-
-    if (func_idx >= aot_module->import_func_count) {
-        /* func pointer was looked up previously */
-        bh_assert(func_ptrs[func_idx] != NULL);
     }
 
     if (!(func_ptr = func_ptrs[func_idx])) {

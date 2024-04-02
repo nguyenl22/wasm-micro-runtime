@@ -643,7 +643,7 @@ bool
 wasm_can_enlarge_memory(WASMModuleInstance *module_inst, uint32 inc_page_count);
 
 bool
-wasm_enlarge_memory(WASMModuleInstance *module_inst, uint32 inc_page_count, bool is_mmap);
+wasm_enlarge_memory(WASMModuleInstance *module_inst, uint32 inc_page_count, bool pre_mapped);
 
 WASMFunctionInstance* 
 wasm_get_indirect_function (WASMModuleInstance *module_inst, uint32 tbl_idx,

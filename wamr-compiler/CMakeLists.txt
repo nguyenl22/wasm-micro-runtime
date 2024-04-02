@@ -266,6 +266,10 @@ if (WAMR_BUILD_LIBC_WASI EQUAL 1)
   message ("-- Libc WASI enabled")
 endif ()
 
+if (WAMR_BUILD_LIBC_WALI EQUAL 1)
+  message ("-- Libc WALI enabled")
+endif ()
+
 if ((NOT WAMR_BUILD_LIBC_WASI) AND (NOT WAMR_BUILD_LIBC_UVWASI))
   message ("-- Libc WASI disabled")
 endif ()
@@ -309,6 +313,10 @@ endif ()
 
 if (WAMR_BUILD_LIBC_WASI EQUAL 1)
   include (${IWASM_DIR}/libraries/libc-wasi/libc_wasi.cmake)
+endif ()
+
+if (WAMR_BUILD_LIBC_WALI EQUAL 1)
+  include (${IWASM_DIR}/libraries/libc-wali/libc_wali.cmake)
 endif ()
 
 if (WAMR_BUILD_LIB_PTHREAD EQUAL 1)
@@ -372,7 +380,9 @@ add_library (vmlib
              ${IWASM_COMMON_SOURCE}
              ${IWASM_INTERP_SOURCE}
              ${IWASM_AOT_SOURCE}
-             ${IWASM_GC_SOURCE})
+             ${IWASM_GC_SOURCE}
+             ${LIBC_WALI_SOURCE}
+             )
 
 add_library (aotclib ${IWASM_COMPL_SOURCE})
 

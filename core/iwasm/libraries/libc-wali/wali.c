@@ -166,7 +166,7 @@ void wali_init_native(wasm_module_inst_t module_inst) {
 /** Helper methods **/
 static uint32_t get_current_memory_size(wasm_exec_env_t exec_env) {
   wasm_module_inst_t module_inst = get_module_inst(exec_env);
-  wasm_function_inst_t memorysize_fn = wasm_runtime_lookup_function(module_inst, "wasm_memory_size", "()i");
+  wasm_function_inst_t memorysize_fn = wasm_runtime_lookup_function(module_inst, "wasm_memory_size");
   uint32_t cur_wasm_pages[1];
   uint32_t mem_size = 0;
   if (memorysize_fn && wasm_runtime_call_wasm(exec_env, memorysize_fn, 0, cur_wasm_pages)) {
@@ -185,7 +185,7 @@ static uint32_t get_current_memory_size(wasm_exec_env_t exec_env) {
  * any mmap specifications */
 static void grow_memory_size(wasm_exec_env_t exec_env, uint32_t inc_wasm_pages) {
   wasm_module_inst_t module_inst = get_module_inst(exec_env);
-  wasm_function_inst_t memorygrow_fn = wasm_runtime_lookup_function(module_inst, "wasm_memory_grow", "(i)i");
+  wasm_function_inst_t memorygrow_fn = wasm_runtime_lookup_function(module_inst, "wasm_memory_grow");
   uint32_t prev_wasm_pages[1] = { inc_wasm_pages };
   if (memorygrow_fn && wasm_runtime_call_wasm(exec_env, memorygrow_fn, 1, prev_wasm_pages)) {
     // Success
@@ -1692,7 +1692,7 @@ int wali_wasm_thread_spawn (wasm_exec_env_t exec_env, int setup_fnptr, int arg_w
 
   /* New module instance -- custom data, import function registration, etc. */
   if (!(new_module_inst = wasm_runtime_instantiate_internal(
-            module, module_inst, exec_env, stack_size, 0, NULL, 0)))
+            module, module_inst, exec_env, stack_size, 0, 0, NULL, 0)))
       return -1;
 
   wasm_runtime_set_custom_data_internal(
@@ -1719,7 +1719,7 @@ int wali_wasm_thread_spawn (wasm_exec_env_t exec_env, int setup_fnptr, int arg_w
   * Thread ID of the created thread is sent back to parent */
   volatile int child_tid = -1;
   pthread_mutex_lock(&clone_lock);
-  ret = wasm_cluster_create_thread(exec_env, new_module_inst, false,
+  ret = wasm_cluster_create_thread(exec_env, new_module_inst, false, 0, 0,
                                    wali_dispatch_thread_libc, thread_start_arg);
   if (ret != 0) {
       FATALSC(wasm_thread_spawn, "Failed to spawn a new thread");

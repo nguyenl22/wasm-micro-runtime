@@ -15,6 +15,7 @@
 #endif
 #if WASM_ENABLE_GC != 0
 #include "gc/gc_object.h"
+#endif
 #if WASM_ENABLE_STRINGREF != 0
 #include "string_object.h"
 #endif

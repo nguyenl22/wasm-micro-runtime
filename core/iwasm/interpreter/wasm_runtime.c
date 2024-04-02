@@ -3495,12 +3495,12 @@ wasm_get_indirect_function (WASMModuleInstance *module_inst, uint32 tbl_idx,
         goto got_exception;
     }
 
-    if (tbl_elem_idx >= table_inst->cur_size) {
+    if (elem_idx >= table_inst->cur_size) {
         wasm_set_exception(module_inst, "undefined element");
         goto got_exception;
     }
 
-    tbl_elem_val = ((table_elem_type_t *)table_inst->elems)[tbl_elem_idx];
+    tbl_elem_val = ((table_elem_type_t *)table_inst->elems)[elem_idx];
     if (tbl_elem_val == NULL_REF) {
         wasm_set_exception(module_inst, "uninitialized element");
         goto got_exception;
