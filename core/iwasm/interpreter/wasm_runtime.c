@@ -3331,8 +3331,8 @@ wasm_module_realloc_internal(WASMModuleInstance *module_inst,
     uint8 *addr = NULL;
 
     /* TODO: Memory64 ptr and size check based on memory idx type */
-    bh_assert(ptr <= UINT32_MAX);
-    bh_assert(size <= UINT32_MAX);
+    bh_assert(ptr <= UINT64_MAX);
+    bh_assert(size <= UINT64_MAX);
 
     if (!memory) {
         wasm_set_exception(module_inst, "uninitialized memory");
@@ -3372,7 +3372,7 @@ wasm_module_free_internal(WASMModuleInstance *module_inst,
     WASMMemoryInstance *memory = wasm_get_default_memory(module_inst);
 
     /* TODO: Memory64 ptr and size check based on memory idx type */
-    bh_assert(ptr <= UINT32_MAX);
+    bh_assert(ptr <= UINT64_MAX);
 
     if (!memory) {
         return;

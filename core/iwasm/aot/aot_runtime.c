@@ -2620,8 +2620,8 @@ aot_module_realloc_internal(AOTModuleInstance *module_inst,
     uint8 *addr = NULL;
 
     /* TODO: Memory64 ptr and size check based on memory idx type */
-    bh_assert(ptr <= UINT32_MAX);
-    bh_assert(size <= UINT32_MAX);
+    bh_assert(ptr <= UINT64_MAX);
+    bh_assert(size <= UINT64_MAX);
 
     if (!memory_inst) {
         aot_set_exception(module_inst, "uninitialized memory");
@@ -2666,7 +2666,7 @@ aot_module_free_internal(AOTModuleInstance *module_inst, WASMExecEnv *exec_env,
     }
 
     /* TODO: Memory64 ptr and size check based on memory idx type */
-    bh_assert(ptr <= UINT32_MAX);
+    bh_assert(ptr <= UINT64_MAX);
 
     if (ptr) {
         uint8 *addr = memory_inst->memory_data + (uint32)ptr;
