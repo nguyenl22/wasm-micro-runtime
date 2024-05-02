@@ -1273,6 +1273,12 @@ long wali_syscall_futex (wasm_exec_env_t exec_env, long a1, long a2, long a3, lo
 	RETURN(__syscall6(SYS_futex, MADDR(a1), a2, a3, MADDR(a4), MADDR(a5), a6));
 }
 
+// 204 
+long wali_syscall_sched_getaffinity (wasm_exec_env_t exec_env, long a1, long a2, long a3) {
+	SC(204 ,sched_getaffinity);
+	RETURN(__syscall3(SYS_sched_getaffinity, a1, a2, MADDR(a3)));
+}
+
 // 217 
 long wali_syscall_getdents64 (wasm_exec_env_t exec_env, long a1, long a2, long a3) {
 	SC(217 ,getdents64);
@@ -1874,6 +1880,7 @@ static NativeSymbol wali_native_symbols[] = {
 	NSYMBOL (           SYS_gettid,            wali_syscall_gettid,        "()I" ),
 	NSYMBOL (            SYS_tkill,             wali_syscall_tkill,      "(ii)I" ),
 	NSYMBOL (            SYS_futex,             wali_syscall_futex,  "(iiiiii)I" ),
+	NSYMBOL ( SYS_sched_getaffinity, wali_syscall_sched_getaffinity,     "(iii)I" ),
 	NSYMBOL (       SYS_getdents64,        wali_syscall_getdents64,     "(iii)I" ),
 	NSYMBOL (  SYS_set_tid_address,   wali_syscall_set_tid_address,       "(i)I" ),
 	NSYMBOL (          SYS_fadvise,           wali_syscall_fadvise,    "(iIIi)I" ),

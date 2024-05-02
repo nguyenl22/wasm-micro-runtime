@@ -285,7 +285,7 @@ long wali_syscall_tkill (wasm_exec_env_t exec_env, long a1, long a2);
 long wali_syscall_time (wasm_exec_env_t exec_env);
 long wali_syscall_futex (wasm_exec_env_t exec_env, long a1, long a2, long a3, long a4, long a5, long a6);
 long wali_syscall_sched_setaffinity (wasm_exec_env_t exec_env);
-long wali_syscall_sched_getaffinity (wasm_exec_env_t exec_env);
+long wali_syscall_sched_getaffinity (wasm_exec_env_t exec_env, long a1, long a2, long a3);
 long wali_syscall_set_thread_area (wasm_exec_env_t exec_env);
 long wali_syscall_io_setup (wasm_exec_env_t exec_env);
 long wali_syscall_io_destroy (wasm_exec_env_t exec_env);
