@@ -410,9 +410,9 @@ long wali_syscall_mmap (wasm_exec_env_t exec_env, long a1, long a2, long a3, lon
     }
   }
   long retval =  WADDR(mem_addr);
-  VB("New MMAP Pagelen: %d\n", MMAP_PAGELEN);
+  VB("New MMAP Pagelen: %d", MMAP_PAGELEN);
   pthread_mutex_unlock(&mmap_lock);
-  VB("Ret Addr: 0x%x", retval);
+  VB("Ret Addr: 0x%x\n", retval);
   RETURN(retval);
 
 mmap_fail:
