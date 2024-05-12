@@ -1881,7 +1881,7 @@ static NativeSymbol wali_native_symbols[] = {
 	NSYMBOL (            SYS_utime,             wali_syscall_utime,      "(ii)I" ),
 	NSYMBOL (           SYS_statfs,            wali_syscall_statfs,      "(ii)I" ),
 	NSYMBOL (          SYS_fstatfs,           wali_syscall_fstatfs,      "(ii)I" ),
-	NSYMBOL (            SYS_prctl,             wali_syscall_prctl,   "(iiiii)I" ),
+	NSYMBOL (            SYS_prctl,             wali_syscall_prctl,   "(iIIII)I" ),
 	NSYMBOL (        SYS_setrlimit,         wali_syscall_setrlimit,      "(ii)I" ),
 	NSYMBOL (           SYS_chroot,            wali_syscall_chroot,       "(i)I" ),
 	NSYMBOL (           SYS_gettid,            wali_syscall_gettid,        "()I" ),
