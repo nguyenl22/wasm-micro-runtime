@@ -1243,6 +1243,12 @@ long wali_syscall_fstatfs (wasm_exec_env_t exec_env, long a1, long a2) {
 	RETURN(__syscall2(SYS_fstatfs, a1, MADDR(a2)));
 }
 
+// 157 
+long wali_syscall_prctl (wasm_exec_env_t exec_env, long a1, long a2, long a3, long a4, long a5) {
+	SC(157 ,prctl);
+	RETURN(__syscall5(SYS_prctl, a1, a2, a3, a4, a5));
+}
+
 // 160 
 long wali_syscall_setrlimit (wasm_exec_env_t exec_env, long a1, long a2) {
 	SC(160 ,setrlimit);
@@ -1875,6 +1881,7 @@ static NativeSymbol wali_native_symbols[] = {
 	NSYMBOL (            SYS_utime,             wali_syscall_utime,      "(ii)I" ),
 	NSYMBOL (           SYS_statfs,            wali_syscall_statfs,      "(ii)I" ),
 	NSYMBOL (          SYS_fstatfs,           wali_syscall_fstatfs,      "(ii)I" ),
+	NSYMBOL (            SYS_prctl,             wali_syscall_prctl,   "(iiiii)I" ),
 	NSYMBOL (        SYS_setrlimit,         wali_syscall_setrlimit,      "(ii)I" ),
 	NSYMBOL (           SYS_chroot,            wali_syscall_chroot,       "(i)I" ),
 	NSYMBOL (           SYS_gettid,            wali_syscall_gettid,        "()I" ),

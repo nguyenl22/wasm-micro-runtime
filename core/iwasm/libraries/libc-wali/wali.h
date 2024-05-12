@@ -238,7 +238,7 @@ long wali_syscall_vhangup (wasm_exec_env_t exec_env);
 long wali_syscall_modify_ldt (wasm_exec_env_t exec_env);
 long wali_syscall_pivot_root (wasm_exec_env_t exec_env);
 long wali_syscall__sysctl (wasm_exec_env_t exec_env);
-long wali_syscall_prctl (wasm_exec_env_t exec_env);
+long wali_syscall_prctl (wasm_exec_env_t exec_env, long a1, long a2, long a3, long a4, long a5);
 long wali_syscall_arch_prctl (wasm_exec_env_t exec_env);
 long wali_syscall_adjtimex (wasm_exec_env_t exec_env);
 long wali_syscall_setrlimit (wasm_exec_env_t exec_env, long a1, long a2);
