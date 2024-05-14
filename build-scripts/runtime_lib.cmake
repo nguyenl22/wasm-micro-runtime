@@ -126,7 +126,6 @@ if (WAMR_BUILD_LIBC_WALI EQUAL 1)
     set (WAMR_BUILD_BULK_MEMORY 1)
     set (WAMR_BUILD_SHARED_MEMORY 1)
     # Currently these settings are required
-    set (WAMR_BUILD_FAST_INTERP 1)
     set (WAMR_BUILD_MULTI_MODULE 1)
 endif ()
 

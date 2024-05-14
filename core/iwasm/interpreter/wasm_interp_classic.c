@@ -27,6 +27,7 @@
 #if WASM_ENABLE_FAST_JIT != 0
 #include "../fast-jit/jit_compiler.h"
 #endif
+#include "sigtable.h"
 
 typedef int32 CellType_I32;
 typedef int64 CellType_I64;
@@ -1302,9 +1303,14 @@ wasm_interp_call_func_import(WASMModuleInstance *module_inst,
 #endif /* WASM_ENABLE_DEBUG_INTERP */
 #endif /* WASM_ENABLE_THREAD_MGR */
 
+
 #if WASM_ENABLE_LABELS_AS_VALUES != 0
 
-#define HANDLE_OP(opcode) HANDLE_##opcode:
+#define HANDLE_OP(opcode) HANDLE_##opcode: \
+  {  \
+    HANDLE_WALI_SIGNAL(); \
+  };
+
 #define FETCH_OPCODE_AND_DISPATCH() goto *handle_table[*frame_ip++]
 
 #if WASM_ENABLE_THREAD_MGR != 0 && WASM_ENABLE_DEBUG_INTERP != 0
