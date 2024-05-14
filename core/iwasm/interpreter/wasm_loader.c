@@ -2336,7 +2336,7 @@ wasm_loader_resolve_tag(const char *module_name, const char *tag_name,
     }
 
     /* check function type */
-    if (!wasm_type_equal(expected_tag_type, tag->tag_type)) {
+    if (!wasm_type_equal(expected_tag_type, tag->tag_type, NULL, 0)) {
         LOG_DEBUG("%s.%s failed the type check", module_name, tag_name);
         set_error_buf(error_buf, error_buf_size, "incompatible import type");
         return NULL;
@@ -10106,7 +10106,7 @@ check_branch_block_for_delegate(WASMLoaderContext *loader_ctx, uint8 **p_buf,
     }
     frame_csp_tmp = loader_ctx->frame_csp - depth - 2;
 #if WASM_ENABLE_FAST_INTERP != 0
-    emit_br_info(frame_csp_tmp);
+    emit_br_info(frame_csp_tmp, false);
 #endif
 
     *p_buf = p;
