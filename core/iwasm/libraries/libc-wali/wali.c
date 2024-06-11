@@ -79,6 +79,10 @@ int WASM_TO_NATIVE_PAGE = 0;
 uint32_t BASE_MEMSIZE = 0;
 uint32_t THREAD_ID = 0; // unused atm
 
+/* strace */
+extern int strace;           // -1=no, 0=print to stdout, 1=print to file
+extern FILE *strace_logfile; // test
+
 inline void
 gettime(struct timespec *ts)
 {
@@ -361,6 +365,39 @@ int64_t total_native_time = 0;
     }
 
 /***** WALI Methods *******/
+// strace helper
+// TODO: error handle and stuff
+void
+strace_print(char *syscall_name, int num, long argv[5], long res)
+{
+    if (strace == 1) {
+        fprintf(strace_logfile, "PID %d", getpid());
+        if (is_multithreaded)
+            fprintf(strace_logfile, ", TID %d", gettid());
+        fprintf(strace_logfile, ": %s(", syscall_name);
+        for (int i = 0; i < num; i++) {
+            if (i == num - 1)
+                fprintf(strace_logfile, "%ld", argv[num - 1]);
+            else
+                fprintf(strace_logfile, "%ld, ", argv[i]);
+        }
+        fprintf(strace_logfile, ") = %ld\n", res);
+    }
+    else if (strace == 0) {
+        printf("PID %d", getpid());
+        if (is_multithreaded)
+            printf(", TID %d", gettid());
+        printf(": %s(", syscall_name);
+        for (int i = 0; i < num; i++) {
+            if (i == num - 1)
+                printf("%ld", argv[num - 1]);
+            else
+                printf("%ld, ", argv[i]);
+        }
+        printf(") = %ld\n", res);
+    }
+}
+
 // 0
 long
 wali_syscall_read(wasm_exec_env_t exec_env, long a1, long a2, long a3)
@@ -633,7 +670,6 @@ wali_syscall_rt_sigaction(wasm_exec_env_t exec_env, long a1, long a2, long a3,
     }
     /* Reset block signals */
     pthread_mutex_unlock(&sigtable_mut);
-
     RETURN(retval);
 }
 
@@ -1107,12 +1143,10 @@ wali_syscall_exit(wasm_exec_env_t exec_env, long a1)
     return 0;
 }
 
-// 61
-long
-wali_syscall_wait4(wasm_exec_env_t exec_env, long a1, long a2, long a3, long a4)
-{
-    SC(61, wait4);
-    RETURN(__syscall4(SYS_wait4, a1, MADDR(a2), a3, MADDR(a4)));
+// 61 
+long wali_syscall_wait4 (wasm_exec_env_t exec_env, long a1, long a2, long a3, long a4) {
+	SC(61 ,wait4);
+	RETURN(__syscall4(SYS_wait4, a1, MADDR(a2), a3, MADDR(a4)));
 }
 
 // 62
@@ -1186,6 +1220,7 @@ wali_syscall_ftruncate(wasm_exec_env_t exec_env, long a1, long a2)
     RETURN(__syscall2(SYS_ftruncate, a1, a2));
 }
 
+>>>>>>> 8c87e6a4 (Added strace prints invoked using --strace=<filename> and checks to open)
 // 78
 long
 wali_syscall_getdents(wasm_exec_env_t exec_env, long a1, long a2, long a3)
@@ -1709,6 +1744,11 @@ wali_syscall_openat(wasm_exec_env_t exec_env, long a1, long a2, long a3,
                     long a4)
 {
     SC(257, openat);
+    //security check
+    if (strncmp((char*)MADDR(a2), "/proc/self/mem", 15) == 0) {
+        printf("Unpermitted attempt to open /proc/self/mem.");
+        RETURN(-1);
+    }
 #if __aarch64__
     RETURN(__syscall4(SYS_openat, a1, MADDR(a2), swap_open_flags(a3), a4));
 #else
