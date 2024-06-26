@@ -905,15 +905,18 @@ long wali_syscall_uname (wasm_exec_env_t exec_env, long a1) {
 long wali_syscall_fcntl (wasm_exec_env_t exec_env, long a1, long a2, long a3) {
 	SC(72 ,fcntl);
   /* Swap open flags only on F_GETFL and F_SETFL mode for aarch64 */
+  switch (a2) {
   #if __aarch64__
-    switch (a2) {
-      case F_GETFL: RETURN(swap_open_flags(__syscall3(SYS_fcntl, a1, a2, a3)); break);
-      case F_SETFL: RETURN(__syscall3(SYS_fcntl, a1, a2, swap_open_flags(a3)); break);
-      default: RETURN(__syscall3(SYS_fcntl, a1, a2, a3));
-    }
-  #else
-	  RETURN(__syscall3(SYS_fcntl, a1, a2, a3));
+    case F_GETFL: RETURN(swap_open_flags(__syscall3(SYS_fcntl, a1, a2, a3)); break);
+    case F_SETFL: RETURN(__syscall3(SYS_fcntl, a1, a2, swap_open_flags(a3)); break);
   #endif
+    case F_GETLK:
+    case F_SETLK:
+    case F_GETOWN_EX:
+    case F_SETOWN_EX: 
+      RETURN(__syscall3(SYS_fcntl, a1, a2, MADDR(a3)));
+    default: RETURN(__syscall3(SYS_fcntl, a1, a2, a3));
+  }
 }
 
 // 73 
