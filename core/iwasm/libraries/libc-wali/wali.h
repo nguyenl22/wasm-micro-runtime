@@ -79,6 +79,7 @@ typedef __libc_jmp_buf __libc_sigjmp_buf;
 
 /** **/
 
+void wali_thread_exit (wasm_exec_env_t exec_env, long v);
 
 /** Syscalls **/
 long wali_syscall_read (wasm_exec_env_t exec_env, long a1, long a2, long a3);

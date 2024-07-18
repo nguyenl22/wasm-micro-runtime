@@ -999,9 +999,6 @@ main(int argc, char *argv[])
         /* wait for threads to finish and propagate exit code. */
         if (invoked_wali) {
           ret = wasm_runtime_get_wali_exit_code(wasm_module_inst);
-          if (ret) {
-            printf("Exit code Fail: %d\n", ret);
-          }
         }
         else
           ret = wasm_runtime_get_wasi_exit_code(wasm_module_inst);

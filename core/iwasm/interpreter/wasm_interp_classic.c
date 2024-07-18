@@ -29,6 +29,10 @@
 #endif
 #include "sigtable.h"
 
+#if WASM_ENABLE_LIBC_WALI != 0
+extern int64 proc_exit_primary_tid;
+#endif
+
 typedef int32 CellType_I32;
 typedef int64 CellType_I64;
 typedef float32 CellType_F32;
@@ -7083,9 +7087,13 @@ wasm_interp_call_wasm(WASMModuleInstance *module_inst, WASMExecEnv *exec_env,
         }
     }
     else {
+#if WASM_ENABLE_LIBC_WALI != 0
+        if (proc_exit_primary_tid == gettid()) {
 #if WASM_ENABLE_DUMP_CALL_STACK != 0
-        if (wasm_interp_create_call_stack(exec_env)) {
-            wasm_interp_dump_call_stack(exec_env, true, NULL, 0);
+          if (wasm_interp_create_call_stack(exec_env)) {
+              wasm_interp_dump_call_stack(exec_env, true, NULL, 0);
+          }
+#endif
         }
 #endif
     }

@@ -46,6 +46,9 @@ char **wali_app_argv;
 char *wali_app_env_file;
 bool invoked_wali;
 
+/* For process exit functionality */
+int64 proc_exit_primary_tid = -1;
+bool proc_exit_invoked = false;
 
 /* For WALI syscall stats */
 #define MAX_SYSCALLS 500
@@ -55,9 +58,6 @@ typedef struct  {
   int64_t nt_count;
   int64_t nt_time;
 } sysmetric_t;
-
-int64_t total_wali_time = 0;
-int64_t total_native_time = 0;
 
 static pthread_mutex_t metrics_lock = PTHREAD_MUTEX_INITIALIZER;
 sysmetric_t syscall_metrics[MAX_SYSCALLS] = {{0}};
@@ -127,6 +127,7 @@ void wali_init_native(wasm_module_inst_t module_inst) {
 
   main_mod_inst = module_inst;
   is_multithreaded = false;
+  proc_exit_invoked = false;
 
   // Register signals for profiling / termination
   struct sigaction act = {0};
@@ -180,9 +181,10 @@ static uint32_t get_current_memory_size(wasm_exec_env_t exec_env) {
   return mem_size;
 }
 
-/* Not currently used since WAMR internal API for memory.grow performs 
+/* CURRENTLY UNUSED: WAMR internal API for memory.grow performs 
  * additional OS protection when growing memory which may interfere with 
  * any mmap specifications */
+__attribute__((used))
 static void grow_memory_size(wasm_exec_env_t exec_env, uint32_t inc_wasm_pages) {
   wasm_module_inst_t module_inst = get_module_inst(exec_env);
   wasm_function_inst_t memorygrow_fn = wasm_runtime_lookup_function(module_inst, "wasm_memory_grow");
@@ -212,7 +214,9 @@ static void grow_memory_size(wasm_exec_env_t exec_env, uint32_t inc_wasm_pages) 
 
 static __thread volatile int64_t nsys_exectime = 0;
 #if WALI_ENABLE_SYSCALL_PROFILE
+int64_t total_wali_time = 0;
 #if WALI_ENABLE_NATIVE_SYSCALL_PROFILE
+int64_t total_native_time = 0;
 #define NATIVE_TIME(code) ({ \
   struct timespec nt_tstart={0,0};  \
   struct timespec nt_tend={0,0}; \
@@ -277,9 +281,25 @@ static __thread volatile int64_t nsys_exectime = 0;
   }
 
 #else /* WALI_ENABLE_SYSCALL_PROFILE = 0 */
-#define SC(nr, f)   LOG_VERBOSE("[%d] WALI: SC | " # f, gettid());
-#define RETURN(v)   return v;
-#endif
+
+/* We can return -1 within if process exit since CHECK_SUSPEND will trigger before
+ * any future call into WALI */
+#define SC(nr, f) { \
+  LOG_VERBOSE("[%d] WALI: SC | " # f, gettid());  \
+  if (proc_exit_invoked) {  \
+    wali_thread_exit(exec_env, 0); \
+    return -1;  \
+  } \
+}
+
+#define RETURN(v) { \
+  if (proc_exit_invoked) {  \
+    wali_thread_exit(exec_env, 0); \
+  } \
+  return v; \
+}
+
+#endif /* end of WALI_ENABLE_SYSCALL_PROFILE */
 
 #define ERRSC(f,...) { \
   LOG_ERROR("[%d] WALI: SC \"" # f "\" not implemented correctly yet! " __VA_ARGS__, gettid());  \
@@ -290,8 +310,6 @@ static __thread volatile int64_t nsys_exectime = 0;
 #define MISSC(f,...) { \
   LOG_FATAL("[%d] WALI: SC \"" # f "\" fatal error! No such syscall on platform", gettid());  \
 }
-
-static void wali_thread_exit (wasm_exec_env_t exec_env, long v);
 
 /***** WALI Methods *******/
 // 0
@@ -1590,9 +1608,11 @@ void wali_proc_exit(wasm_exec_env_t exec_env, long v) {
     VB("Main ended successfully");
   }
   wali_ctx->exit_code = v;
+  proc_exit_primary_tid = gettid();
+  proc_exit_invoked = true;
 }
 
-static void wali_thread_exit(wasm_exec_env_t exec_env, long v) {
+void wali_thread_exit(wasm_exec_env_t exec_env, long v) {
   PC(thread_exit);
   /* Have to use cancel thread as opposed to exit thread
   * so that it is caught after native functions (WALI) returns */
