@@ -1493,10 +1493,9 @@ wasm_runtime_instantiate(WASMModuleCommon *module, uint32 stack_size,
                          uint32 heap_size, char *error_buf,
                          uint32 error_buf_size)
 {
-    WASMModuleInstanceCommon *module_inst =
-      wasm_runtime_instantiate_internal(module, NULL, NULL, stack_size,
-                                             heap_size, 0, error_buf,
-                                             error_buf_size);
+    WASMModuleInstanceCommon *module_inst = wasm_runtime_instantiate_internal(
+        module, NULL, NULL, stack_size, heap_size, 0, error_buf,
+        error_buf_size);
 #if WASM_ENABLE_LIBC_WALI != 0
     wali_init_native(module_inst);
 #endif
@@ -1893,15 +1892,18 @@ wasm_runtime_set_module_inst(WASMExecEnv *exec_env,
 }
 
 uint32
-wasm_runtime_get_function_idx(WASMModuleInstanceCommon *module_inst, WASMFunctionInstanceCommon *func) {
+wasm_runtime_get_function_idx(WASMModuleInstanceCommon *module_inst,
+                              WASMFunctionInstanceCommon *func)
+{
 #if WASM_ENABLE_INTERP != 0
     if (module_inst->module_type == Wasm_Module_Bytecode) {
-        return (WASMFunctionInstance*)(func) - ((WASMModuleInstance*)(module_inst))->e->functions;
+        return (WASMFunctionInstance *)(func)
+               - ((WASMModuleInstance *)(module_inst))->e->functions;
     }
 #endif
 #if WASM_ENABLE_AOT != 0
     if (module_inst->module_type == Wasm_Module_AoT) {
-        return ((AOTFunctionInstance*)func)->func_index;
+        return ((AOTFunctionInstance *)func)->func_index;
     }
 #endif
     return -1;
@@ -1977,10 +1979,10 @@ wasm_runtime_lookup_function(WASMModuleInstanceCommon *const module_inst,
     return NULL;
 }
 
-
 WASMFunctionInstanceCommon *
 wasm_runtime_get_indirect_function(WASMModuleInstanceCommon *module_inst,
-                                  uint32 tbl_idx, uint32 elem_idx) {
+                                   uint32 tbl_idx, uint32 elem_idx)
+{
 #if WASM_ENABLE_INTERP != 0
     if (module_inst->module_type == Wasm_Module_Bytecode) {
         return (WASMFunctionInstanceCommon *)wasm_get_indirect_function(
@@ -1989,36 +1991,34 @@ wasm_runtime_get_indirect_function(WASMModuleInstanceCommon *module_inst,
 #endif
 #if WASM_ENABLE_AOT != 0
     if (module_inst->module_type == Wasm_Module_AoT) {
-      AOTModuleInstance *aot_inst = (AOTModuleInstance*)module_inst;
-      void *func_ptr;
-      uint32 func_idx;
-      AOTFuncType *func_type;
-      bool success = aot_get_indirect_function(aot_inst, tbl_idx, elem_idx, 
-                      &func_ptr, &func_idx, &func_type);
+        AOTModuleInstance *aot_inst = (AOTModuleInstance *)module_inst;
+        void *func_ptr;
+        uint32 func_idx;
+        AOTFuncType *func_type;
+        bool success = aot_get_indirect_function(
+            aot_inst, tbl_idx, elem_idx, &func_ptr, &func_idx, &func_type);
 
-      if (!success) {
-        return NULL;
-      }
+        if (!success) {
+            return NULL;
+        }
 
-      /* Create a custom function instance since this is discarded
-      * by the compiler. Caller implementation is responsible for freeing */
-      AOTFunctionInstance *func_inst = 
-        (AOTFunctionInstance*) runtime_malloc(
+        /* Create a custom function instance since this is discarded
+         * by the compiler. Caller implementation is responsible for freeing */
+        AOTFunctionInstance *func_inst = (AOTFunctionInstance *)runtime_malloc(
             sizeof(AOTFunctionInstance), module_inst, NULL, 0);
-      if (!func_inst) {
-        return NULL;
-      }
-      func_inst->func_name = "";
-      func_inst->func_index = func_idx;
-      func_inst->is_import_func = false;
-      func_inst->u.func.func_type = func_type; 
-      func_inst->u.func.func_ptr = func_ptr;
+        if (!func_inst) {
+            return NULL;
+        }
+        func_inst->func_name = "";
+        func_inst->func_index = func_idx;
+        func_inst->is_import_func = false;
+        func_inst->u.func.func_type = func_type;
+        func_inst->u.func.func_ptr = func_ptr;
 
-      return (WASMFunctionInstanceCommon *)func_inst;
+        return (WASMFunctionInstanceCommon *)func_inst;
     }
 #endif
     return NULL;
-
 }
 
 uint32

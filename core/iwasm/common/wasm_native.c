@@ -345,7 +345,8 @@ static dtor_t g_context_dtors[WASM_MAX_INSTANCE_CONTEXTS];
 
 static void
 dtor_noop(WASMModuleInstanceCommon *inst, void *ctx)
-{}
+{
+}
 
 void *
 wasm_native_create_context_key(void (*dtor)(WASMModuleInstanceCommon *inst,
@@ -516,8 +517,7 @@ wasm_native_init()
 
 #if WASM_ENABLE_LIBC_WALI != 0
     n_native_symbols = get_libc_wali_export_apis(&native_symbols);
-    if (!wasm_native_register_natives("wali", native_symbols,
-                                      n_native_symbols))
+    if (!wasm_native_register_natives("wali", native_symbols, n_native_symbols))
         goto fail;
 #endif
 

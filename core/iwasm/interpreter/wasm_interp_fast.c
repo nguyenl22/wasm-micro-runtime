@@ -1375,17 +1375,19 @@ wasm_interp_dump_op_count()
 
 /* #define HANDLE_OP(opcode) HANDLE_##opcode:printf(#opcode"\n"); */
 #if WASM_ENABLE_OPCODE_COUNTER != 0
-#define HANDLE_OP(opcode) HANDLE_##opcode : \
-  { \
-    /* opcode_table[opcode].count++; */ \
-    module->e->opcode_table[opcode]++; \
-    HANDLE_WALI_SIGNAL(); \
-  };
+#define HANDLE_OP(opcode)                   \
+    HANDLE_##opcode:                        \
+    {                                       \
+        /* opcode_table[opcode].count++; */ \
+        module->e->opcode_table[opcode]++;  \
+        HANDLE_WALI_SIGNAL();               \
+    };
 #else
-#define HANDLE_OP(opcode) HANDLE_##opcode:  \
-  {  \
-    HANDLE_WALI_SIGNAL(); \
-  };
+#define HANDLE_OP(opcode)     \
+    HANDLE_##opcode:          \
+    {                         \
+        HANDLE_WALI_SIGNAL(); \
+    };
 #endif
 #if WASM_CPU_SUPPORTS_UNALIGNED_ADDR_ACCESS != 0
 #define FETCH_OPCODE_AND_DISPATCH()                    \
@@ -6151,9 +6153,9 @@ wasm_interp_call_wasm(WASMModuleInstance *module_inst, WASMExecEnv *exec_env,
 #if WASM_ENABLE_LIBC_WALI != 0
         if (proc_exit_primary_tid == gettid()) {
 #if WASM_ENABLE_DUMP_CALL_STACK != 0
-          if (wasm_interp_create_call_stack(exec_env)) {
-              wasm_interp_dump_call_stack(exec_env, true, NULL, 0);
-          }
+            if (wasm_interp_create_call_stack(exec_env)) {
+                wasm_interp_dump_call_stack(exec_env, true, NULL, 0);
+            }
 #endif
         }
 #endif
@@ -6162,6 +6164,6 @@ wasm_interp_call_wasm(WASMModuleInstance *module_inst, WASMExecEnv *exec_env,
     wasm_exec_env_set_cur_frame(exec_env, prev_frame);
     FREE_FRAME(exec_env, frame);
 #if WASM_ENABLE_OPCODE_COUNTER != 0
-    //wasm_interp_dump_op_count();
+    // wasm_interp_dump_op_count();
 #endif
 }

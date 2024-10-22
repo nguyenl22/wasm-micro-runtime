@@ -43,7 +43,7 @@ static unsigned int global_pool_size;
 
 /* Custom methods */
 uint32
-wasm_runtime_get_base_memory_size(WASMModuleInstanceCommon *module_inst_comm) 
+wasm_runtime_get_base_memory_size(WASMModuleInstanceCommon *module_inst_comm)
 {
     WASMModuleInstance *mod_inst = (WASMModuleInstance *)module_inst_comm;
     WASMMemoryInstance *memory_inst = wasm_get_default_memory(mod_inst);
@@ -51,7 +51,7 @@ wasm_runtime_get_base_memory_size(WASMModuleInstanceCommon *module_inst_comm)
 }
 
 uint32
-wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst_comm) 
+wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst_comm)
 {
     WASMModuleInstance *mod_inst = (WASMModuleInstance *)module_inst_comm;
     WASMMemoryInstance *memory_inst = wasm_get_default_memory(mod_inst);
@@ -59,7 +59,7 @@ wasm_runtime_get_memory_size(WASMModuleInstanceCommon *module_inst_comm)
 }
 
 uint32
-wasm_runtime_get_max_memory_size(WASMModuleInstanceCommon *module_inst_comm) 
+wasm_runtime_get_max_memory_size(WASMModuleInstanceCommon *module_inst_comm)
 {
     WASMModuleInstance *mod_inst = (WASMModuleInstance *)module_inst_comm;
     WASMMemoryInstance *memory_inst = wasm_get_default_memory(mod_inst);
@@ -736,7 +736,8 @@ wasm_mmap_linear_memory(uint64_t map_size, uint64 commit_size)
 }
 
 bool
-wasm_enlarge_memory_internal(WASMModuleInstance *module, uint32 inc_page_count, bool pre_mapped)
+wasm_enlarge_memory_internal(WASMModuleInstance *module, uint32 inc_page_count,
+                             bool pre_mapped)
 {
     WASMMemoryInstance *memory = wasm_get_default_memory(module);
     uint8 *memory_data_old, *memory_data_new, *heap_data_old;
@@ -791,11 +792,13 @@ wasm_enlarge_memory_internal(WASMModuleInstance *module, uint32 inc_page_count, 
     if (full_size_mmaped) {
 
         if (pre_mapped) {
-            LOG_VERBOSE("NOTE: Enlarging memory with mmap syscall by %d pages", inc_page_count);
+            LOG_VERBOSE("NOTE: Enlarging memory with mmap syscall by %d pages",
+                        inc_page_count);
         }
-        else 
-        {
-            LOG_VERBOSE("NOTE: Enlarging memory with memory.grow by %d pages... There may be errors here", inc_page_count);
+        else {
+            LOG_VERBOSE("NOTE: Enlarging memory with memory.grow by %d "
+                        "pages... There may be errors here",
+                        inc_page_count);
 
 #ifdef BH_PLATFORM_WINDOWS
             if (!os_mem_commit(memory->memory_data_end,
@@ -895,7 +898,8 @@ wasm_runtime_set_enlarge_mem_error_callback(
 }
 
 bool
-wasm_enlarge_memory(WASMModuleInstance *module, uint32 inc_page_count, bool pre_mapped)
+wasm_enlarge_memory(WASMModuleInstance *module, uint32 inc_page_count,
+                    bool pre_mapped)
 {
     bool ret = false;
 

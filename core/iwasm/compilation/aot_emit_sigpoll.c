@@ -8,7 +8,7 @@
         if (!(new_llvm_block = LLVMAppendBasicBlockInContext(   \
                   comp_ctx->context, func_ctx->func, name))) {  \
             aot_set_last_error("add LLVM basic block failed."); \
-            return false;                                          \
+            return false;                                       \
         }                                                       \
     } while (0)
 
@@ -28,7 +28,7 @@
         if (!LLVMBuildCondBr(comp_ctx->builder, value_if, block_then, \
                              block_else)) {                           \
             aot_set_last_error("llvm build cond br failed.");         \
-            return false;                                                \
+            return false;                                             \
         }                                                             \
     } while (0)
 
@@ -36,7 +36,7 @@
     do {                                                   \
         if (!LLVMBuildBr(comp_ctx->builder, llvm_block)) { \
             aot_set_last_error("llvm build br failed.");   \
-            return false;                                     \
+            return false;                                  \
         }                                                  \
     } while (0)
 
@@ -45,12 +45,13 @@
         if (!(res =                                                           \
                   LLVMBuildICmp(comp_ctx->builder, op, left, right, name))) { \
             aot_set_last_error("llvm build icmp failed.");                    \
-            return false;                                                        \
+            return false;                                                     \
         }                                                                     \
     } while (0)
 
 bool
-aot_emit_sigpoll(AOTCompContext *comp_ctx, AOTFuncContext *func_ctx) {
+aot_emit_sigpoll(AOTCompContext *comp_ctx, AOTFuncContext *func_ctx)
+{
 #if WALI_ENABLE_SIGNAL_HANDLING
     /* For WALI Signal Poll handling */
     LLVMValueRef func;
@@ -75,7 +76,8 @@ aot_emit_sigpoll(AOTCompContext *comp_ctx, AOTFuncContext *func_ctx) {
     MOVE_BLOCK_AFTER_CURR(contpoll_block);
 
     /* Test whether to invoke call or continue */
-    BUILD_ICMP(LLVMIntEQ, sigpoll_value, I64_ZERO, take_sigpoll, "sigpoll_flag");
+    BUILD_ICMP(LLVMIntEQ, sigpoll_value, I64_ZERO, take_sigpoll,
+               "sigpoll_flag");
     BUILD_COND_BR(take_sigpoll, contpoll_block, sigpoll_block);
 
     /* Sigpolling */
@@ -90,17 +92,17 @@ aot_emit_sigpoll(AOTCompContext *comp_ctx, AOTFuncContext *func_ctx) {
     }
 
     /* External function pointer to 'aot_poll_pending_signal' */
-    if (!(func = LLVMGetNamedFunction(func_ctx->module,
-                                      "aot_poll_pending_signal"))
-        && !(func = LLVMAddFunction(func_ctx->module,
-                                    "aot_poll_pending_signal",
+    if (!(func =
+              LLVMGetNamedFunction(func_ctx->module, "aot_poll_pending_signal"))
+        && !(func = LLVMAddFunction(func_ctx->module, "aot_poll_pending_signal",
                                     func_type))) {
         aot_set_last_error("add LLVM function failed.");
         return false;
     }
 
     param_values[0] = func_ctx->exec_env;
-    if (!LLVMBuildCall2(comp_ctx->builder, func_type, func, param_values, 1, "")) {
+    if (!LLVMBuildCall2(comp_ctx->builder, func_type, func, param_values, 1,
+                        "")) {
         aot_set_last_error("llvm build call failed.");
         return false;
     }

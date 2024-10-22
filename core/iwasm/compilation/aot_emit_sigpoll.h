@@ -3,7 +3,6 @@
 
 #include "aot_compiler.h"
 
-
 #if WALI_ENABLE_SIGNAL_HANDLING
 
 #if WALI_ENABLE_ALL_SIGPOLL

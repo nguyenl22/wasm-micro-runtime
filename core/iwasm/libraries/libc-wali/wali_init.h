@@ -3,6 +3,7 @@
 
 #include "wasm_export.h"
 
-void wali_init_native (wasm_module_inst_t module_inst);
+void
+wali_init_native(wasm_module_inst_t module_inst);
 
 #endif

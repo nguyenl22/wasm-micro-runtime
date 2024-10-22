@@ -107,13 +107,13 @@ typedef struct AOTFunctionInstance {
 
 /* AOT global instance */
 typedef struct AOTGlobalInstance {
-  char *name;
-  uint32 index;
-  bool is_import_global;
-  union {
-    AOTGlobal *glob;
-    AOTImportGlobal *glob_import;
-  } u;
+    char *name;
+    uint32 index;
+    bool is_import_global;
+    union {
+        AOTGlobal *glob;
+        AOTImportGlobal *glob_import;
+    } u;
 } AOTGlobalInstance;
 
 typedef struct AOTModuleInstanceExtra {
@@ -527,7 +527,7 @@ aot_lookup_function(const AOTModuleInstance *module_inst, const char *name);
  *
  * @return the global instance found
  */
-AOTGlobalInstance*
+AOTGlobalInstance *
 aot_lookup_global(const AOTModuleInstance *module_inst, const char *name);
 
 /**
@@ -586,7 +586,8 @@ aot_copy_exception(AOTModuleInstance *module_inst, char *exception_buf);
  * @param exec_env the execution environment
  * @return none
  */
-void aot_poll_pending_signal(WASMExecEnv *exec_env);
+void
+aot_poll_pending_signal(WASMExecEnv *exec_env);
 
 uint64
 aot_module_malloc_internal(AOTModuleInstance *module_inst, WASMExecEnv *env,
@@ -629,12 +630,12 @@ aot_invoke_native(WASMExecEnv *exec_env, uint32 func_idx, uint32 argc,
                   uint32 *argv);
 
 /**
-* Get indirect function and return func_ptr, func_idx, func_type 
-*/
+ * Get indirect function and return func_ptr, func_idx, func_type
+ */
 bool
-aot_get_indirect_function (AOTModuleInstance *module_inst, uint32 tbl_idx,
-                          uint32 table_elem_idx, void **func_ptr_addr, 
-                          uint32* func_idx_addr, AOTFuncType **func_type_addr);
+aot_get_indirect_function(AOTModuleInstance *module_inst, uint32 tbl_idx,
+                          uint32 table_elem_idx, void **func_ptr_addr,
+                          uint32 *func_idx_addr, AOTFuncType **func_type_addr);
 
 bool
 aot_call_indirect(WASMExecEnv *exec_env, uint32 tbl_idx, uint32 table_elem_idx,

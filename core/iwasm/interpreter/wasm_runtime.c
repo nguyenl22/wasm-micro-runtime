@@ -3480,10 +3480,10 @@ wasm_enlarge_table(WASMModuleInstance *module_inst, uint32 table_idx,
 }
 #endif /* end of WASM_ENABLE_REF_TYPES != 0 || WASM_ENABLE_GC != 0 */
 
-
-WASMFunctionInstance* 
-wasm_get_indirect_function (WASMModuleInstance *module_inst, uint32 tbl_idx,
-                      uint32 elem_idx) {
+WASMFunctionInstance *
+wasm_get_indirect_function(WASMModuleInstance *module_inst, uint32 tbl_idx,
+                           uint32 elem_idx)
+{
     WASMTableInstance *table_inst = NULL;
     table_elem_type_t tbl_elem_val = NULL_REF;
     uint32 func_idx = 0;
@@ -3538,11 +3538,11 @@ call_indirect(WASMExecEnv *exec_env, uint32 tbl_idx, uint32 elem_idx,
     module_inst = (WASMModuleInstance *)exec_env->module_inst;
     bh_assert(module_inst);
 
-    WASMFunctionInstance *func_inst = 
+    WASMFunctionInstance *func_inst =
         wasm_get_indirect_function(module_inst, tbl_idx, elem_idx);
 
     if (!func_inst) {
-      goto got_exception;
+        goto got_exception;
     }
 
     if (check_type_idx) {

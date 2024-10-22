@@ -448,9 +448,9 @@ typedef struct WASIContext {
 
 #if WASM_ENABLE_LIBC_WALI != 0
 typedef struct WALIContext {
-  uint32_t exit_code;
-  /* Currently unused */
-  char *env_filepath;
+    uint32_t exit_code;
+    /* Currently unused */
+    char *env_filepath;
 } WALIContext;
 #endif
 
@@ -677,7 +677,8 @@ wasm_runtime_set_module_inst(WASMExecEnv *exec_env,
 
 /* See wasm_export.h for description */
 WASM_RUNTIME_API_EXTERN uint32
-wasm_runtime_get_function_idx(WASMModuleInstanceCommon *const module_inst, WASMFunctionInstanceCommon *func);
+wasm_runtime_get_function_idx(WASMModuleInstanceCommon *const module_inst,
+                              WASMFunctionInstanceCommon *func);
 
 /* See wasm_export.h for description */
 WASM_RUNTIME_API_EXTERN void *

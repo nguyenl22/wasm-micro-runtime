@@ -29,7 +29,6 @@
 #endif
 #include "../interpreter/sigtable.h"
 
-
 WASMExecEnv *
 wasm_exec_env_create_internal(struct WASMModuleInstanceCommon *module_inst,
                               uint32 stack_size)

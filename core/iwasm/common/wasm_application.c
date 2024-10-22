@@ -136,17 +136,20 @@ execute_main(WASMModuleInstanceCommon *module_inst, int32 argc, char *argv[])
                - A process termination should terminate threads in
                  the process. */
             if (invoked_wali)
-              wasm_runtime_set_exception(module_inst, wali_proc_exit_exception);
+                wasm_runtime_set_exception(module_inst,
+                                           wali_proc_exit_exception);
             else
-              wasm_runtime_set_exception(module_inst, wasi_proc_exit_exception);
+                wasm_runtime_set_exception(module_inst,
+                                           wasi_proc_exit_exception);
             /* exit_code is zero-initialized */
             ret = false;
         }
 #endif
         /* report wasm proc exit as a success */
         WASMModuleInstance *inst = (WASMModuleInstance *)module_inst;
-        if (!ret && (strstr(inst->cur_exception, wasi_proc_exit_exception) 
-                      || strstr(inst->cur_exception, wali_proc_exit_exception)) ) {
+        if (!ret
+            && (strstr(inst->cur_exception, wasi_proc_exit_exception)
+                || strstr(inst->cur_exception, wali_proc_exit_exception))) {
             inst->cur_exception[0] = 0;
             ret = true;
         }

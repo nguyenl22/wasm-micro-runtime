@@ -1241,7 +1241,7 @@ create_export_funcs(AOTModuleInstance *module_inst, AOTModule *module,
 
 static bool
 create_export_globals(AOTModuleInstance *module_inst, AOTModule *module,
-                    char *error_buf, uint32 error_buf_size)
+                      char *error_buf, uint32 error_buf_size)
 {
     AOTExport *exports = module->exports;
     AOTGlobalInstance *export_global;
@@ -1252,7 +1252,8 @@ create_export_globals(AOTModuleInstance *module_inst, AOTModule *module,
         /* Allocate memory */
         size = sizeof(AOTGlobalInstance)
                * (uint64)module_inst->export_global_count;
-        if (!(export_global = runtime_malloc(size, error_buf, error_buf_size))) {
+        if (!(export_global =
+                  runtime_malloc(size, error_buf, error_buf_size))) {
             return false;
         }
         module_inst->export_globals = (void *)export_global;
@@ -1270,8 +1271,7 @@ create_export_globals(AOTModuleInstance *module_inst, AOTModule *module,
                     export_global->is_import_global = false;
                     global_index =
                         export_global->index - module->import_global_count;
-                    export_global->u.glob =
-                        &module->globals[global_index];
+                    export_global->u.glob = &module->globals[global_index];
                 }
                 export_global++;
             }
@@ -1308,7 +1308,8 @@ create_exports(AOTModuleInstance *module_inst, AOTModule *module,
     }
 
     return create_export_funcs(module_inst, module, error_buf, error_buf_size)
-        && create_export_globals(module_inst, module, error_buf, error_buf_size);
+           && create_export_globals(module_inst, module, error_buf,
+                                    error_buf_size);
 }
 
 static AOTFunctionInstance *
@@ -2000,12 +2001,12 @@ aot_lookup_function(const AOTModuleInstance *module_inst, const char *name)
     return NULL;
 }
 
-AOTGlobalInstance*
+AOTGlobalInstance *
 aot_lookup_global(const AOTModuleInstance *module_inst, const char *name)
 {
     uint32 i;
     AOTGlobalInstance *export_globs =
-        (AOTGlobalInstance*)module_inst->export_globals;
+        (AOTGlobalInstance *)module_inst->export_globals;
 
     for (i = 0; i < module_inst->export_global_count; i++)
         if (!strcmp(export_globs[i].name, name))
@@ -2395,20 +2396,22 @@ aot_copy_exception(AOTModuleInstance *module_inst, char *exception_buf)
 void
 aot_poll_pending_signal(WASMExecEnv *exec_env)
 {
-  int signo;
-  if ((signo = get_pending_signal()) != -1) {
-    pthread_mutex_lock(&sigtable_mut);
-    AOTModuleInstance *module_inst = (AOTModuleInstance*) wasm_runtime_get_module_inst(exec_env);
-    AOTFunctionInstance* sigfn = wali_sigtable[signo].function;
-    /* Patch function pointer in case of reassignment */
-    uint32 func_idx = wali_sigtable[signo].func_idx;
-    uint32 func_type_idx = module_inst->func_type_indexes[func_idx]; 
-    sigfn->u.func.func_type = ((AOTModule*)module_inst->module)->types[func_type_idx];
-    sigfn->u.func.func_ptr = module_inst->func_ptrs[func_idx];
-    /* */
-    pthread_mutex_unlock(&sigtable_mut);
-    wasm_runtime_call_wasm(exec_env, sigfn, 1, (uint32_t*)&signo);
-  }
+    int signo;
+    if ((signo = get_pending_signal()) != -1) {
+        pthread_mutex_lock(&sigtable_mut);
+        AOTModuleInstance *module_inst =
+            (AOTModuleInstance *)wasm_runtime_get_module_inst(exec_env);
+        AOTFunctionInstance *sigfn = wali_sigtable[signo].function;
+        /* Patch function pointer in case of reassignment */
+        uint32 func_idx = wali_sigtable[signo].func_idx;
+        uint32 func_type_idx = module_inst->func_type_indexes[func_idx];
+        sigfn->u.func.func_type =
+            ((AOTModule *)module_inst->module)->types[func_type_idx];
+        sigfn->u.func.func_ptr = module_inst->func_ptrs[func_idx];
+        /* */
+        pthread_mutex_unlock(&sigtable_mut);
+        wasm_runtime_call_wasm(exec_env, sigfn, 1, (uint32_t *)&signo);
+    }
 }
 
 static bool
@@ -2847,32 +2850,32 @@ fail:
     return ret;
 }
 
-
 bool
-aot_get_indirect_function (AOTModuleInstance *module_inst, uint32 tbl_idx,
-                          uint32 table_elem_idx, void **func_ptr_addr, 
-                          uint32* func_idx_addr, AOTFuncType **func_type_addr) {
+aot_get_indirect_function(AOTModuleInstance *module_inst, uint32 tbl_idx,
+                          uint32 table_elem_idx, void **func_ptr_addr,
+                          uint32 *func_idx_addr, AOTFuncType **func_type_addr)
+{
 
-  AOTModule *aot_module = (AOTModule *)module_inst->module;
-  AOTTableInstance *tbl_inst = NULL;
-  table_elem_type_t tbl_elem_val = NULL_REF;
-  uint32 *func_type_indexes = module_inst->func_type_indexes;
-  uint32 func_idx;
-  uint32 func_type_idx;
-  void **func_ptrs = module_inst->func_ptrs;
+    AOTModule *aot_module = (AOTModule *)module_inst->module;
+    AOTTableInstance *tbl_inst = NULL;
+    table_elem_type_t tbl_elem_val = NULL_REF;
+    uint32 *func_type_indexes = module_inst->func_type_indexes;
+    uint32 func_idx;
+    uint32 func_type_idx;
+    void **func_ptrs = module_inst->func_ptrs;
 
-  tbl_inst = module_inst->tables[tbl_idx];
-  bh_assert(tbl_inst);
-  if (table_elem_idx >= tbl_inst->cur_size) {
-      aot_set_exception_with_id(module_inst, EXCE_UNDEFINED_ELEMENT);
-      goto fail;
-  }
+    tbl_inst = module_inst->tables[tbl_idx];
+    bh_assert(tbl_inst);
+    if (table_elem_idx >= tbl_inst->cur_size) {
+        aot_set_exception_with_id(module_inst, EXCE_UNDEFINED_ELEMENT);
+        goto fail;
+    }
 
-  tbl_elem_val = tbl_inst->elems[table_elem_idx];
-  if (tbl_elem_val == NULL_REF) {
-      aot_set_exception_with_id(module_inst, EXCE_UNINITIALIZED_ELEMENT);
-      goto fail;
-  }
+    tbl_elem_val = tbl_inst->elems[table_elem_idx];
+    if (tbl_elem_val == NULL_REF) {
+        aot_set_exception_with_id(module_inst, EXCE_UNINITIALIZED_ELEMENT);
+        goto fail;
+    }
 
 #if WASM_ENABLE_GC == 0
     func_idx = tbl_elem_val;
@@ -2881,22 +2884,22 @@ aot_get_indirect_function (AOTModuleInstance *module_inst, uint32 tbl_idx,
         wasm_func_obj_get_func_idx_bound((WASMFuncObjectRef)tbl_elem_val);
 #endif
 
-  func_type_idx = func_type_indexes[func_idx];
-  *func_type_addr = aot_module->types[func_type_idx];
+    func_type_idx = func_type_indexes[func_idx];
+    *func_type_addr = aot_module->types[func_type_idx];
 
-  if (func_idx >= aot_module->import_func_count) {
-      /* func pointer was looked up previously */
-      bh_assert(func_ptrs[func_idx] != NULL);
-  }
+    if (func_idx >= aot_module->import_func_count) {
+        /* func pointer was looked up previously */
+        bh_assert(func_ptrs[func_idx] != NULL);
+    }
 
-  *func_ptr_addr = func_ptrs[func_idx];
-  *func_idx_addr = func_idx;
-  return true;
+    *func_ptr_addr = func_ptrs[func_idx];
+    *func_idx_addr = func_idx;
+    return true;
 
 fail:
-  *func_ptr_addr = NULL;
-  *func_idx_addr = 0;
-  return false;
+    *func_ptr_addr = NULL;
+    *func_idx_addr = 0;
+    return false;
 }
 
 bool
@@ -2925,10 +2928,10 @@ aot_call_indirect(WASMExecEnv *exec_env, uint32 tbl_idx, uint32 table_elem_idx,
         goto fail;
     }
 
-    bool success = aot_get_indirect_function(module_inst, tbl_idx, table_elem_idx, 
-                                          &func_ptr, &func_idx, &func_type);
+    bool success = aot_get_indirect_function(
+        module_inst, tbl_idx, table_elem_idx, &func_ptr, &func_idx, &func_type);
     if (!success) {
-      goto fail;
+        goto fail;
     }
 
     if (!(func_ptr = func_ptrs[func_idx])) {

@@ -4,16 +4,16 @@
 /** Architecture **/
 #ifndef __riscv64__
 #if __riscv
-  #if __riscv_xlen == 64
-    #define __riscv64__ 1
-  #endif
+#if __riscv_xlen == 64
+#define __riscv64__ 1
+#endif
 #endif
 #endif
 
 #if !__x86_64__ && !__aarch64__ && !__riscv64__
-#error "Unsupported architecture for WALI -- Only supports [x86_64, aarch64, riscv64]"
+#error \
+    "Unsupported architecture for WALI -- Only supports [x86_64, aarch64, riscv64]"
 #endif
-
 
 /** Memory defines **/
 #define WASM_PAGESIZE 65536

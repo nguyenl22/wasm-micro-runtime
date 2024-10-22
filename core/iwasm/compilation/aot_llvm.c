@@ -150,15 +150,15 @@ create_basic_func_context(const AOTCompContext *comp_ctx,
 
     LLVMValueRef offset, sigpoll_addr;
     offset = I32_TEN;
-    if (!(sigpoll_addr = LLVMBuildInBoundsGEP2(
-              comp_ctx->builder, OPQ_PTR_TYPE, func_ctx->exec_env, &offset, 1,
-              "sigpoll_addr_ptr"))) {
+    if (!(sigpoll_addr = LLVMBuildInBoundsGEP2(comp_ctx->builder, OPQ_PTR_TYPE,
+                                               func_ctx->exec_env, &offset, 1,
+                                               "sigpoll_addr_ptr"))) {
         aot_set_last_error("llvm build in bounds gep failed");
         return false;
     }
     if (!(sigpoll_addr =
-              LLVMBuildBitCast(comp_ctx->builder, sigpoll_addr,
-                               INT64_PTR_TYPE, "sigpoll_addr_ptr_cast"))) {
+              LLVMBuildBitCast(comp_ctx->builder, sigpoll_addr, INT64_PTR_TYPE,
+                               "sigpoll_addr_ptr_cast"))) {
         aot_set_last_error("llvm build bit cast failed");
         return false;
     }
@@ -2411,7 +2411,7 @@ jit_stack_size_callback(void *user_data, const char *name, size_t namelen,
     stack_consumption_to_call_wrapped_func =
         musttail ? 0
                  : aot_estimate_stack_usage_for_function_call(
-                     comp_ctx, func_ctx->aot_func->func_type);
+                       comp_ctx, func_ctx->aot_func->func_type);
     LOG_VERBOSE("func %.*s stack %u + %zu + %u", (int)namelen, name,
                 stack_consumption_to_call_wrapped_func, stack_size, call_size);
 

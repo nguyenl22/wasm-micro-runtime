@@ -959,7 +959,7 @@ aot_compile_func(AOTCompContext *comp_ctx, uint32 func_index)
 
 #if WALI_ENABLE_FUNC_SIGPOLL
     if (!aot_emit_sigpoll(comp_ctx, func_ctx)) {
-      return false;
+        return false;
     }
 #endif
 
@@ -978,7 +978,7 @@ aot_compile_func(AOTCompContext *comp_ctx, uint32 func_index)
 #endif
 #if WALI_ENABLE_ALL_SIGPOLL
         if (!aot_emit_sigpoll(comp_ctx, func_ctx)) {
-          return false;
+            return false;
         }
 #endif
         switch (opcode) {

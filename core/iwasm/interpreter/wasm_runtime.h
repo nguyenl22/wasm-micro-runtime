@@ -466,7 +466,6 @@ struct WASMModuleInstance {
 #if WASM_ENABLE_LIBC_WALI
     WALIContext wali_ctx;
 #endif
-
 };
 
 struct WASMInterpFrame;
@@ -643,11 +642,12 @@ bool
 wasm_can_enlarge_memory(WASMModuleInstance *module_inst, uint32 inc_page_count);
 
 bool
-wasm_enlarge_memory(WASMModuleInstance *module_inst, uint32 inc_page_count, bool pre_mapped);
+wasm_enlarge_memory(WASMModuleInstance *module_inst, uint32 inc_page_count,
+                    bool pre_mapped);
 
-WASMFunctionInstance* 
-wasm_get_indirect_function (WASMModuleInstance *module_inst, uint32 tbl_idx,
-                      uint32 elem_idx);
+WASMFunctionInstance *
+wasm_get_indirect_function(WASMModuleInstance *module_inst, uint32 tbl_idx,
+                           uint32 elem_idx);
 
 bool
 wasm_call_indirect(WASMExecEnv *exec_env, uint32 tbl_idx, uint32 elem_idx,

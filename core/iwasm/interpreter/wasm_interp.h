@@ -9,15 +9,15 @@
 #include "wasm.h"
 
 /** WALI Signal Handling Poll **/
-#define HANDLE_WALI_SIGNAL()  \
-  int signo;  \
-  if ((signo = get_pending_signal()) != -1) { \
-    pthread_mutex_lock(&sigtable_mut);  \
-    WASMFunctionInstance* sigfn = module->e->functions + wali_sigtable[signo].func_idx; \
-    pthread_mutex_unlock(&sigtable_mut);  \
-    wasm_runtime_call_wasm(exec_env, sigfn, 1, (uint32_t*)&signo);  \
-  } \
-
+#define HANDLE_WALI_SIGNAL()                                            \
+    int signo;                                                          \
+    if ((signo = get_pending_signal()) != -1) {                         \
+        pthread_mutex_lock(&sigtable_mut);                              \
+        WASMFunctionInstance *sigfn =                                   \
+            module->e->functions + wali_sigtable[signo].func_idx;       \
+        pthread_mutex_unlock(&sigtable_mut);                            \
+        wasm_runtime_call_wasm(exec_env, sigfn, 1, (uint32_t *)&signo); \
+    }
 
 #ifdef __cplusplus
 extern "C" {
