@@ -285,7 +285,7 @@ int64_t total_native_time = 0;
     struct timespec vt_tstart = { 0, 0 }; \
     gettime(&vt_tstart);
 
-#define RETURN(v, syscall, ...)                                    \
+#define RETURN(v, syscall, num_args...)                            \
     {                                                              \
         long frv = v;                                              \
         struct timespec vt_tend = { 0, 0 };                        \
@@ -303,7 +303,9 @@ int64_t total_native_time = 0;
         total_native_time += nsys_exectime;                        \
         total_wali_time += (virtsys_exectime - nsys_exectime);     \
         pthread_mutex_unlock(&metrics_lock);                       \
-        strace_print(v, syscall, num_args, __VA_ARGS__);           \
+        if (strace == 0 || strace == 1) {                          \
+            strace_print(v, syscall, num_args, __VA_ARGS__);       \
+        }                                                          \
         return frv;                                                \
     }
 
@@ -337,13 +339,15 @@ int64_t total_native_time = 0;
         }                                             \
     }
 
-#define RETURN(v, syscall, num_args, ...)                \
-    {                                                    \
-        if (proc_exit_invoked) {                         \
-            wali_thread_exit(exec_env, 0);               \
-        }                                                \
-        strace_print(v, syscall, num_args, __VA_ARGS__); \
-        return v;                                        \
+#define RETURN(v, syscall, num_args, ...)                    \
+    {                                                        \
+        if (proc_exit_invoked) {                             \
+            wali_thread_exit(exec_env, 0);                   \
+        }                                                    \
+        if (strace == 0 || strace == 1) {                    \
+            strace_print(v, syscall, num_args, __VA_ARGS__); \
+        }                                                    \
+        return v;                                            \
     }
 
 #endif /* end of WALI_ENABLE_SYSCALL_PROFILE */
@@ -374,19 +378,15 @@ strace_print(long syscall_res, char *syscall_name, int num_args, ...)
 {
     va_list args;
     va_start(args, num_args);
-    //Weird work around when num_args = 0 so we don't declare 0 length array
-    if (num_args == 0){
-        num_args = 1;
-    }
-    long argv[num_args];
+    long argv[6];
     for (int i = 0; i < num_args; i++) {
         argv[i] = va_arg(args, long);
     }
     va_end(args);
     if (strace == 1) {
-        fprintf(strace_logfile, "PID %d", getpid());
-        if (is_multithreaded)
-            fprintf(strace_logfile, ", TID %d", gettid());
+        fprintf(strace_logfile, "%d", getpid());
+        // Print out TID even when it is not multithreaded
+        fprintf(strace_logfile, ", %d", gettid());
         fprintf(strace_logfile, ": %s(", syscall_name);
         for (int i = 0; i < num_args; i++) {
             if (i == num_args - 1)
@@ -397,9 +397,8 @@ strace_print(long syscall_res, char *syscall_name, int num_args, ...)
         fprintf(strace_logfile, ") = %ld\n", syscall_res);
     }
     else if (strace == 0) {
-        printf("PID %d", getpid());
-        if (is_multithreaded)
-            printf(", TID %d", gettid());
+        printf("%d", getpid());
+        printf(", %d", gettid());
         printf(": %s(", syscall_name);
         for (int i = 0; i < num_args; i++) {
             if (i == num_args - 1)
@@ -567,8 +566,7 @@ wali_syscall_mmap(wasm_exec_env_t exec_env, long a1, long a2, long a3, long a4,
     VB("New MMAP Pagelen: %d", MMAP_PAGELEN);
     pthread_mutex_unlock(&mmap_lock);
     VB("Ret Addr: 0x%x\n", retval);
-    RETURN(retval, "mmap", 6, a1, a2, a3,
-           a4, a5, a6);
+    RETURN(retval, "mmap", 6, a1, a2, a3, a4, a5, a6);
 
 mmap_fail:
     pthread_mutex_unlock(&mmap_lock);
@@ -580,7 +578,8 @@ long
 wali_syscall_mprotect(wasm_exec_env_t exec_env, long a1, long a2, long a3)
 {
     SC(10, mprotect);
-    RETURN(__syscall3(SYS_mprotect, MADDR(a1), a2, a3), "mprotect", 3, a1, a2, a3);
+    RETURN(__syscall3(SYS_mprotect, MADDR(a1), a2, a3), "mprotect", 3, a1, a2,
+           a3);
 }
 
 // 11
@@ -696,8 +695,10 @@ wali_syscall_rt_sigprocmask(wasm_exec_env_t exec_env, long a1, long a2, long a3,
                             long a4)
 {
     SC(14, rt_sigprocmask);
-    RETURN(__syscall4(SYS_rt_sigprocmask, a1, MADDR(a2), MADDR(a3), a4), "rt_sigprocmask", 4,
-           a1, a2, a3, a4);
+    //TODO: Delete
+    //printf("Before returning in sigprocmask \n");
+    RETURN(__syscall4(SYS_rt_sigprocmask, a1, MADDR(a2), MADDR(a3), a4),
+           "rt_sigprocmask", 4, a1, a2, a3, a4);
 }
 
 // 15: Never directly called; __libc_restore_rt is called by OS
@@ -723,8 +724,8 @@ wali_syscall_pread64(wasm_exec_env_t exec_env, long a1, long a2, long a3,
                      long a4)
 {
     SC(17, pread64);
-    RETURN(__syscall4(SYS_pread64, a1, MADDR(a2), a3, a4), "pread64", 4, a1, a2, a3,
-           a4);
+    RETURN(__syscall4(SYS_pread64, a1, MADDR(a2), a3, a4), "pread64", 4, a1, a2,
+           a3, a4);
 }
 
 // 18
@@ -733,8 +734,8 @@ wali_syscall_pwrite64(wasm_exec_env_t exec_env, long a1, long a2, long a3,
                       long a4)
 {
     SC(18, pwrite64);
-    RETURN(__syscall4(SYS_pwrite64, a1, MADDR(a2), a3, a4), "pwrite64", 4, a1, a2, a3,
-           a4);
+    RETURN(__syscall4(SYS_pwrite64, a1, MADDR(a2), a3, a4), "pwrite64", 4, a1,
+           a2, a3, a4);
 }
 
 // 19
@@ -749,7 +750,7 @@ wali_syscall_readv(wasm_exec_env_t exec_env, long a1, long a2, long a3)
     long retval = __syscall3(SYS_readv, a1, native_iov, a3);
     free(native_iov);
 
-    RETURN(retval, "writev", 3, a1, a2, a3);
+    RETURN(retval, "readv", 3, a1, a2, a3);
 }
 
 // 20
@@ -763,6 +764,8 @@ wali_syscall_writev(wasm_exec_env_t exec_env, long a1, long a2, long a3)
     struct iovec *native_iov = copy_iovec(exec_env, wasm_iov, iov_cnt);
     long retval = __syscall3(SYS_writev, a1, native_iov, a3);
     free(native_iov);
+    //TODO: Delete
+    //printf("Before returning in writev \n");
     RETURN(retval, "writev", 3, a1, a2, a3);
 }
 
@@ -931,6 +934,8 @@ long
 wali_syscall_nanosleep(wasm_exec_env_t exec_env, long a1, long a2)
 {
     SC(35, nanosleep);
+    //TODO delete
+    //printf("Before returning in nanosleep \n");
     RETURN(__syscall2(SYS_nanosleep, MADDR(a1), MADDR(a2)), "nanosleep", 2, a1,
            a2);
 }
