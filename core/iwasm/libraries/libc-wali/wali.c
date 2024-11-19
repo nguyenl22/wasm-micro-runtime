@@ -305,7 +305,7 @@ int64_t total_native_time = 0;
         total_wali_time += (virtsys_exectime - nsys_exectime);     \
         pthread_mutex_unlock(&metrics_lock);                       \
         if (strace == 0 || strace == 1) {                          \
-            strace_print(v, syscall, num_args, __VA_ARGS__);       \
+            strace_print(frv, syscall, num_args, __VA_ARGS__);       \
         }                                                          \
         return frv;                                                \
     }
@@ -340,15 +340,16 @@ int64_t total_native_time = 0;
         }                                             \
     }
 
-#define RETURN(v, syscall, num_args, ...)                    \
-    {                                                        \
-        if (proc_exit_invoked) {                             \
-            wali_thread_exit(exec_env, 0);                   \
-        }                                                    \
-        if (strace == 0 || strace == 1) {                    \
-            strace_print(v, syscall, num_args, __VA_ARGS__); \
-        }                                                    \
-        return v;                                            \
+#define RETURN(v, syscall, num_args, ...)                      \
+    {                                                          \
+        long res = v;                                          \
+        if (proc_exit_invoked) {                               \
+            wali_thread_exit(exec_env, 0);                     \
+        }                                                      \
+        if (strace == 0 || strace == 1) {                      \
+            strace_print(res, syscall, num_args, __VA_ARGS__); \
+        }                                                      \
+        return res;                                            \
     }
 
 #endif /* end of WALI_ENABLE_SYSCALL_PROFILE */
@@ -372,307 +373,22 @@ int64_t total_native_time = 0;
     }
 
 /***** WALI Methods *******/
-/* sio_reverse - Reverse a string (from K&R) */
-static void sio_reverse(char s[], size_t len) {
-    size_t i, j;
-    for (i = 0, j = len - 1; i < j; i++, j--) {
-        char c = s[i];
-        s[i] = s[j];
-        s[j] = c;
-    }
-}
-
 /* write_digits - write digit values of v in base b to string */
-static size_t write_digits(uintmax_t v, char s[], unsigned char b) {
-    size_t i = 0;
+static size_t
+write_digits(uintmax_t v, char s[], unsigned int start, unsigned char b)
+{
+    size_t i = start;
     do {
         unsigned char c = (unsigned char)(v % (uintmax_t)b);
         if (c < 10) {
             s[i++] = (char)(c + '0');
-        } else {
+        }
+        else {
             s[i++] = (char)(c - 10 + 'a');
         }
     } while ((v /= b) > 0);
     return i;
 }
-/* Based on K&R itoa() */
-/* intmax_to_string - Convert an intmax_t to a base b string */
-static size_t intmax_to_string(intmax_t v, char s[], unsigned char b) {
-    bool neg = v < 0;
-    size_t len;
-
-    if (neg) {
-        len = write_digits((uintmax_t)-v, s, b);
-        s[len++] = '-';
-    } else {
-        len = write_digits((uintmax_t)v, s, b);
-    }
-
-    s[len] = '\0';
-    sio_reverse(s, len);
-    return len;
-}
-
-/* uintmax_to_string - Convert a uintmax_t to a base b string */
-static size_t uintmax_to_string(uintmax_t v, char s[], unsigned char b) {
-    size_t len = write_digits(v, s, b);
-    s[len] = '\0';
-    sio_reverse(s, len);
-    return len;
-}
-struct _format_data {
-    const char *str; // String to output
-    size_t len;      // Length of string to output
-    char buf[128];   // Backing buffer to use for conversions
-};
-
-static size_t _handle_format(const char *fmt, va_list argp,
-                             struct _format_data *data) {
-    size_t pos = 0;
-    bool handled = false;
-
-    if (fmt[0] == '%') {
-        // Marked if we need to convert an integer
-        char convert_type = '\0';
-        union {
-            uintmax_t u;
-            intmax_t s;
-        } convert_value = {.u = 0};
-
-        switch (fmt[1]) {
-
-        // Character format
-        case 'c': {
-            data->buf[0] = (char)va_arg(argp, int);
-            data->buf[1] = '\0';
-            data->str = data->buf;
-            data->len = 1;
-            handled = true;
-            pos += 2;
-            break;
-        }
-
-        // String format
-        case 's': {
-            data->str = va_arg(argp, char *);
-            if (data->str == NULL) {
-                data->str = "(null)";
-            }
-            data->len = strlen(data->str);
-            handled = true;
-            pos += 2;
-            break;
-        }
-
-        // Escaped %
-        case '%': {
-            data->str = fmt;
-            data->len = 1;
-            handled = true;
-            pos += 2;
-            break;
-        }
-
-        // Pointer type
-        case 'p': {
-            void *ptr = va_arg(argp, void *);
-            if (ptr == NULL) {
-                data->str = "(nil)";
-                data->len = strlen(data->str);
-                handled = true;
-            } else {
-                convert_type = 'p';
-                convert_value.u = (uintmax_t)(uintptr_t)ptr;
-            }
-            pos += 2;
-            break;
-        }
-
-        // Int types with no format specifier
-        case 'd':
-        case 'i':
-            convert_type = 'd';
-            convert_value.s = (intmax_t)va_arg(argp, int);
-            pos += 2;
-            break;
-        case 'u':
-        case 'x':
-        case 'o':
-            convert_type = fmt[1];
-            convert_value.u = (uintmax_t)va_arg(argp, unsigned);
-            pos += 2;
-            break;
-
-        // Int types with size format: long
-        case 'l': {
-            switch (fmt[2]) {
-            case 'd':
-            case 'i':
-                convert_type = 'd';
-                convert_value.s = (intmax_t)va_arg(argp, long);
-                pos += 3;
-                break;
-            case 'u':
-            case 'x':
-            case 'o':
-                convert_type = fmt[2];
-                convert_value.u = (uintmax_t)va_arg(argp, unsigned long);
-                pos += 3;
-                break;
-            }
-            break;
-        }
-
-        // Int types with size format: size_t
-        case 'z': {
-            switch (fmt[2]) {
-            case 'd':
-            case 'i':
-                convert_type = 'd';
-                convert_value.s = (intmax_t)(uintmax_t)va_arg(argp, size_t);
-                pos += 3;
-                break;
-            case 'u':
-            case 'x':
-            case 'o':
-                convert_type = fmt[2];
-                convert_value.u = (uintmax_t)va_arg(argp, size_t);
-                pos += 3;
-                break;
-            }
-            break;
-        }
-        }
-
-        // Convert int type to string
-        switch (convert_type) {
-        case 'd':
-            data->str = data->buf;
-            data->len = intmax_to_string(convert_value.s, data->buf, 10);
-            handled = true;
-            break;
-        case 'u':
-            data->str = data->buf;
-            data->len = uintmax_to_string(convert_value.u, data->buf, 10);
-            handled = true;
-            break;
-        case 'x':
-            data->str = data->buf;
-            data->len = uintmax_to_string(convert_value.u, data->buf, 16);
-            handled = true;
-            break;
-        case 'o':
-            data->str = data->buf;
-            data->len = uintmax_to_string(convert_value.u, data->buf, 8);
-            handled = true;
-            break;
-        case 'p':
-            strcpy(data->buf, "0x");
-            data->str = data->buf;
-            data->len =
-                uintmax_to_string(convert_value.u, data->buf + 2, 16) + 2;
-            handled = true;
-            break;
-        }
-    }
-
-    // Didn't match a format above
-    // Handle block of non-format characters
-    if (!handled) {
-        data->str = fmt;
-        data->len = 1 + strcspn(fmt + 1, "%");
-        pos += data->len;
-    }
-
-    return pos;
-}
-
-ssize_t
-rio_writen(int fd, const void *usrbuf, size_t n)
-{
-    size_t nleft = n;
-    ssize_t nwritten;
-    const char *bufp = usrbuf;
-
-    while (nleft > 0) {
-        if ((nwritten = write(fd, bufp, nleft)) <= 0) {
-            if (errno != EINTR) {
-                return -1; /* errno set by write() */
-            }
-
-            /* Interrupted by sig handler return, call write() again */
-            nwritten = 0;
-        }
-        nleft -= (size_t)nwritten;
-        bufp += nwritten;
-    }
-    return (ssize_t)n;
-}
-
-/**
- * @brief   Prints formatted output to a file descriptor from a va_list.
- * @param fileno   The file descriptor to print output to.
- * @param fmt      The format string used to determine the output.
- * @param argp     The arguments for the format string.
- * @return         The number of bytes written, or -1 on error.
- *
- * @remark   This function is async-signal-safe.
- *
- * This is a reentrant and async-signal-safe implementation of vdprintf, used
- * to implement the associated formatted sio functions.
- *
- * This function writes directly to a file descriptor (using the `rio_writen`
- * function from csapp), as opposed to a `FILE *` from the standard library.
- * However, since these writes are unbuffered, this is not very efficient, and
- * should only be used when async-signal-safety is necessary.
- *
- * The only supported format specifiers are the following:
- *  -  Int types: %d, %i, %u, %x, %o (with size specifiers l, z)
- *  -  Others: %c, %s, %%, %p
- */
-ssize_t sio_vdprintf(int fileno, const char *fmt, va_list argp) {
-    size_t pos = 0;
-    ssize_t num_written = 0;
-
-    while (fmt[pos] != '\0') {
-        // Int to string conversion
-        struct _format_data data;
-        memset(&data, 0, sizeof(data));
-
-        // Handle format characters
-        pos += _handle_format(&fmt[pos], argp, &data);
-
-        // Write output
-        if (data.len > 0) {
-            ssize_t ret = rio_writen(fileno, (const void *)data.str, data.len);
-            if (ret < 0 || (size_t)ret != data.len) {
-                return -1;
-            }
-            num_written += (ssize_t)data.len;
-        }
-    }
-
-    return num_written;
-}
-
-/**
- * @brief   Prints formatted output to a file descriptor.
- * @param fileno   The file descriptor to print output to.
- * @param fmt      The format string used to determine the output.
- * @param ...      The arguments for the format string.
- * @return         The number of bytes written, or -1 on error.
- *
- * @remark   This function is async-signal-safe.
- * @see      sio_vdprintf
- */
-ssize_t sio_dprintf(int fileno, const char *fmt, ...) {
-    va_list argp;
-    va_start(argp, fmt);
-    ssize_t ret = sio_vdprintf(fileno, fmt, argp);
-    va_end(argp);
-    return ret;
-}
-
 // strace helper
 // TODO: error handle and stuff
 void
@@ -685,46 +401,40 @@ strace_print(long syscall_res, char *syscall_name, int num_args, ...)
         argv[i] = va_arg(args, long);
     }
     va_end(args);
-    /*
-    if (strace == 1) {
-        printf(strace_logfile, "%d", getpid());
-        // Print out TID even when it is not multithreaded
-        fprintf(strace_logfile, ", %d", gettid());
-        fprintf(strace_logfile, ": %s(", syscall_name);
-        for (int i = 0; i < num_args; i++) {
-            if (i == num_args - 1)
-                fprintf(strace_logfile, "%ld", argv[num_args - 1]);
-            else
-                fprintf(strace_logfile, "%ld, ", argv[i]);
-        }
-        fprintf(strace_logfile, ") = %ld\n", syscall_res);
-    }
-    else if (strace == 0) {
-        printf("%d", getpid());
-        printf(", %d", gettid());
-        printf(": %s(", syscall_name);
-        for (int i = 0; i < num_args; i++) {
-            if (i == num_args - 1)
-                printf("%ld", argv[num_args - 1]);
-            else
-                printf("%ld, ", argv[i]);
-        }
-        printf(") = %ld\n", syscall_res);
-    }
-    */
-    int strace_fd  = strace_logfile->_fileno;
+    int strace_fd = strace_logfile->_fileno;
     if (strace == 1 || strace == 0) {
-        sio_dprintf(strace_fd, "%d", getpid());
-            // Print out TID even when it is not multithreaded
-            sio_dprintf(strace_fd, ", %d", gettid());
-        sio_dprintf(strace_fd, ": %s(", syscall_name);
-        for (int i = 0; i < num_args; i++) {
-            if (i == num_args - 1)
-                sio_dprintf(strace_fd, "%ld", argv[num_args - 1]);
-            else
-                sio_dprintf(strace_fd, "%ld, ", argv[i]);
+        unsigned int offset = 0;
+        char buf[2024];
+        offset = write_digits(getpid(), buf, 0, 10);
+        buf[offset++] = ',';
+        buf[offset++] = ' ';
+        offset = write_digits(gettid(), buf, offset, 10);
+        buf[offset++] = ':';
+        buf[offset++] = ' ';
+        int name_length = 0;
+        while (syscall_name[name_length] != '\0') {
+            name_length += 1;
         }
-        sio_dprintf(strace_fd, ") = %ld\n", syscall_res);
+        memcpy(&buf[offset++], syscall_name, name_length);
+        offset += (name_length - 1);
+        buf[offset++] = '(';
+        for (int i = 0; i < num_args; i++) {
+            if (i == num_args - 1) {
+                offset = write_digits(argv[i], buf, offset, 10);
+            }
+            else {
+                offset = write_digits(argv[i], buf, offset, 10);
+                buf[offset++] = ',';
+                buf[offset++] = ' ';
+            }
+        }
+        buf[offset++] = ')';
+        buf[offset++] = ' ';
+        buf[offset++] = '=';
+        buf[offset++] = ' ';
+        offset = write_digits(syscall_res, buf, offset, 10);
+        buf[offset++] = '\n';
+        write(strace_fd, buf, offset);
     }
 }
 
@@ -1013,8 +723,6 @@ wali_syscall_rt_sigprocmask(wasm_exec_env_t exec_env, long a1, long a2, long a3,
                             long a4)
 {
     SC(14, rt_sigprocmask);
-    // TODO: Delete
-    // printf("Before returning in sigprocmask \n");
     RETURN(__syscall4(SYS_rt_sigprocmask, a1, MADDR(a2), MADDR(a3), a4),
            "rt_sigprocmask", 4, a1, a2, a3, a4);
 }
@@ -1082,8 +790,6 @@ wali_syscall_writev(wasm_exec_env_t exec_env, long a1, long a2, long a3)
     struct iovec *native_iov = copy_iovec(exec_env, wasm_iov, iov_cnt);
     long retval = __syscall3(SYS_writev, a1, native_iov, a3);
     free(native_iov);
-    // TODO: Delete
-    // printf("Before returning in writev \n");
     RETURN(retval, "writev", 3, a1, a2, a3);
 }
 
@@ -1252,8 +958,6 @@ long
 wali_syscall_nanosleep(wasm_exec_env_t exec_env, long a1, long a2)
 {
     SC(35, nanosleep);
-    // TODO delete
-    // printf("Before returning in nanosleep \n");
     RETURN(__syscall2(SYS_nanosleep, MADDR(a1), MADDR(a2)), "nanosleep", 2, a1,
            a2);
 }
